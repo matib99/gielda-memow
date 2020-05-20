@@ -1,9 +1,3 @@
-// import { memeList } from './const'
-  
-// var data = require('./memeList.json');
-// var memeList = data.memes;
-
-
 var memeObj;
 
 const listPath = "./public/json/memeList.json";
@@ -87,8 +81,6 @@ const readList = (file) => {
     let rawdata = fs.readFileSync(file, 'utf8');
     return JSON.parse(rawdata);
 }
-
-// "./public/json/memeList.json"
 
 const saveList = (data, file) => {
     var fs = require('fs');
