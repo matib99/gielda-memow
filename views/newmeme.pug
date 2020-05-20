@@ -1,0 +1,17 @@
+extends layout
+
+block content
+  h1= message
+    div(class='meme')
+        h1 #{'Nowy mem: '}
+        form(action=`/meme` method='POST')
+            label #{'Nazwa: '}
+            input(type='text' name='name' required)
+            br
+            label #{'Url: '}
+            input(type='text' name='url' required)
+            br
+            label #{'Cena: '}
+            input(type='number' name='price' required)
+            br
+            input(type='submit', value='Dodaj')

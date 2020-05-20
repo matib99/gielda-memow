@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  h1= 'GIEŁDA MEMÓW'
+  h2= message
+        ul(class='memeList')
+            each meme in memes
+                li(class='meme')
+                   a(href="/meme/" + meme.id class='memeLink') #{meme.name}
+                   img(src=meme.url class='memeImg')
+                   p(class='memePrice') #{'Cena: ' + meme.price}

@@ -1,0 +1,80 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: darkseagreen;
+  color: cornsilk;
+  text-align: center;
+  align-content: center;
+}
+
+a {
+  color: cornsilk;
+  text-decoration: none;
+}
+a:visited {
+  color: cornsilk;
+}
+
+h1 {
+  font-size: 48px;
+}
+h2 {
+  font-size: 32px;
+}
+
+.meme {
+  display: flex;
+  flex-direction: column;
+  background-color: cornsilk;
+  color: darkseagreen;
+  font-size: 20px;
+  text-align: center;
+  align-self: center;
+  border-radius: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 10px;
+  width: 700px;
+}
+
+.meme a:visited,
+.meme a {
+  font-size: 36px;
+  text-decoration: none;
+  color: darkseagreen;
+}
+
+.memeImg {
+  border-radius: 10px;
+  border-color: darkseagreen;
+  border-style: dashed;
+  margin: auto;
+  width: 500px;
+}
+
+.back-btn {
+  font-size: 36px;
+  text-decoration: none;
+}
+
+.priceTable {
+  text-align: left;
+  margin: 10px;
+}
+
+.priceTable,
+.priceTable th, 
+.priceTable td {
+  border: 1px solid darkseagreen;
+  border-collapse: collapse;
+}
+
+.memeList {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto;
+}
