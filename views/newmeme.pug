@@ -6,12 +6,13 @@ block content
         h1 #{'Nowy mem: '}
         form(action=`/meme` method='POST')
             label #{'Nazwa: '}
-            input(type='text' name='name' required)
+            input(type='text' name='title' required)
             br
             label #{'Url: '}
-            input(type='text' name='url' required)
+            input(type='text' name='fileurl' required)
             br
             label #{'Cena: '}
             input(type='number' name='price' required)
             br
             input(type='submit', value='Dodaj')
+            input(type="hidden" name='_csrf' value=csrfToken)

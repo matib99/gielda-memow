@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  h1= message
+  if logged
+    a(href="/logout") #{'Wyloguj'} 
+  else
+    form(action=`${login ? '/login' : '/register'}` method='POST')
+      label #{'Login: '}
+      input(type='input' name='username' required)
+      br
+      label #{'Hasło: '}
+      input(type='password' name='password' required)
+      br
+      input(type='submit', value=`${login ? 'Zaloguj' : 'Zarejestruj'}`) 
+  br
+  a(href="/") #{'Wróć'}
+        

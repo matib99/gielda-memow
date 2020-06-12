@@ -1,95 +1,148 @@
-var memeObj;
+var mysql = require('mysql')
+var connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '12345678',
+  database: 'mememarket'
+})
 
-const listPath = "./public/json/memeList.json";
-
-const getMemeList = () => {
-    if(memeObj === undefined)
-        memeObj = readList(listPath);
-    if(memeObj.memes === undefined)
-        return []
-    else
-        return memeObj.memes;
-}
+connection.connect()
 
 const getMeme = (id) => {
-    var memeList = getMemeList();
-    if(id < 0 || id >= memeList.length)
-        return null;
-    else 
-        return memeList[id];
+    return new Promise((resolve, reject) => {
+        connection.query(
+        `SELECT * FROM memes WHERE id = ${id}`,
+        (err, rows, fields) => {
+            if (err) {
+                // connection.end();
+                return reject(err);
+            }
+            var meme = rows[0];
+            if(meme === undefined) {
+                // connection.end();
+                resolve(undefined)
+            }
+            else {
+                connection.query(
+                `SELECT price, changedate, username FROM prices LEFT JOIN users ON prices.userid = users.id WHERE memeid = ${id} ORDER BY changedate DESC`,
+                (err, rows, fields) => {
+                    if (err) {
+                        // connection.end();
+                        return reject(err);
+                    }
+                    meme.priceHistory = rows;
+                    // connection.end();
+                    resolve(meme);
+                })
+            }
+        });
+    });
 }
 
 const getTop = (n) =>  {
-    var memeList = getMemeList();
-    
-    let toplist = [...memeList].sort(
-        (a, b) => {
-            return Math.sign(b.price - a.price)
-        }
-    )
-    if(n >= 0) 
-        toplist = toplist.slice(0, n);
-
-    var data = {
-        memes: toplist
-    }
-
-    return toplist;
-}
-
-const newPrice = (id, price) => {
-    var memeList = getMemeList();
-    
-    if(id < 0 || id >= memeList.length)
-        return;
-    var current_datetime = new Date();
-    let formatted_date = current_datetime.getFullYear() 
-                 + "-" + (current_datetime.getMonth() + 1)
-                 + "-" + current_datetime.getDate()
-                 + " " +current_datetime.getHours() 
-                 + ":" + current_datetime.getMinutes() 
-                 + ":" + current_datetime.getSeconds() 
-
-    memeList[id].priceHistory = [ {
-        date: formatted_date,
-        value: price
-    }, ...memeList[id].priceHistory];
-    memeList[id].price = price;
-    saveList(memeObj, listPath);
-}
-
-
-const addMeme = (name, url, price) => {
-    var memeList = getMemeList();
-    const id = memeList.length;
-    const meme = {
-        id: id,
-        name: name,
-        url: url,
-        price: 0,
-        priceHistory: []
-    }
-    memeList = [...memeList, meme];
-    memeObj.memes = memeList;
-    newPrice(id, price);
-}
-
-
-
-const readList = (file) => {
-    var fs = require('fs');
-    let rawdata = fs.readFileSync(file, 'utf8');
-    return JSON.parse(rawdata);
-}
-
-const saveList = (data, file) => {
-    var fs = require('fs');
-    fs.writeFile(file, JSON.stringify(data), function(err) {
-        if (err) {
-            console.log(err);
-        }
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT * FROM memes ORDER BY price ${(n > 0) ? `LIMIT ${n} ` : ``} `,
+        (err, rows, fields) => {
+            if (err) {
+                // connection.end();
+                return reject(err);
+            }
+            // connection.end();
+            resolve(rows);
+        });
     });
 }
-    
+
+const newPrice = (id, price, userid=0) => {
+    connection.beginTransaction( (err) =>{
+        if(err) {
+            // connection.end();
+            throw err;
+        }
+        connection.query(
+        `UPDATE memes SET price=${price}
+        WHERE id=${id}`,
+        (err) => {
+            if(err) {
+                connection.rollback();
+                // connection.end();
+                throw err;
+            } 
+            else {
+                connection.query(
+                `INSERT INTO prices (memeid, price, changedate, userid)
+                VALUES (${id}, ${price}, "${getDate()}", ${userid})`, 
+                (err) => {
+                    if(err) {
+                        connection.rollback();
+                        // connection.end();
+                        throw err;
+                    } 
+                    else {
+                        connection.commit((err)=>{
+                            if(err) connection.rollback();
+                            // connection.end();
+                        })
+                        
+                    }
+                })
+            }
+        })
+    });
+}
+
+
+const addMeme = (title, fileurl, price, userid) => {
+    connection.beginTransaction( (err) =>{
+        if(err) {
+            // connection.end();
+            throw err;
+        }
+        connection.query(
+        `INSERT INTO memes (title, price, fileurl)
+        VALUES (${title}, ${price}, ${fileurl})`,
+        (err, res) => {
+            if(err) {
+                connection.rollback();
+                // connection.end();
+                throw err;
+            } 
+            else {
+                connection.query(
+                `INSERT INTO prices (memeid, price, changedate, userid)
+                VALUES (${res.insertId}, ${price}, "${getDate()}", ${userid})`, 
+                (err) => {
+                    if(err) {
+                        connection.rollback();
+                        // connection.end();
+                        throw err;
+                    } 
+                    else {
+                        connection.commit((err)=>{
+                            if(err) connection.rollback();
+                            // connection.end();
+                        })
+                        
+                    }
+                })
+            }
+        })
+    });
+}
+
+
+
+const getDate = () => {
+    // oczywiście to jest data UTC, ponieważ nasza giełda to poważny międzynarodowy biznes
+    var date;
+    date = new Date();
+    date = date.getUTCFullYear() + '-' +
+        ('00' + (date.getUTCMonth()+1)).slice(-2) + '-' +
+        ('00' + date.getUTCDate()).slice(-2) + ' ' + 
+        ('00' + date.getUTCHours()).slice(-2) + ':' + 
+        ('00' + date.getUTCMinutes()).slice(-2) + ':' + 
+        ('00' + date.getUTCSeconds()).slice(-2);
+    return date;
+}
 
 module.exports = {getMeme, getTop, newPrice, addMeme};

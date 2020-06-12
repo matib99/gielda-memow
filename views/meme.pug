@@ -3,8 +3,8 @@ extends layout
 block content
   h1= message
     div(class='meme')
-        a(href="meme/" + meme.id ) #{meme.name}
-        img(src=meme.url class='memeImg')
+        a(href="../meme/" + meme.id ) #{meme.title}
+        img(src=meme.fileurl class='memeImg')
         p(class='memePrice') #{'Cena: ' + meme.price}
         br
         p #{'Ceny Historyczne:'}
@@ -12,16 +12,20 @@ block content
             tr
                 th #{'Data'}
                 th #{'Cena'}
+                th #{'Zmieniacz'}
             each price in meme.priceHistory
                 tr
-                    td #{  price.date}
-                    td #{price.value}
+                    td #{price.changedate}
+                    td #{price.price}
+                    td #{price.username}
         br
-        p #{'Zmień cenę:'}
-        form(action=`/meme/${meme.id}` method='POST')
-            label #{'Nowa cena: '}
-            input(type='number' name='price' required)
-            input(type='submit', value='Zmień')
-        br
+        if logged
+            p #{'Zmień cenę:'}
+            form(action=`/meme/${meme.id}` method='POST')
+                label #{'Nowa cena: '}
+                input(type='number' name='price' required)
+                input(type='submit', value='Zmień')
+                input(type="hidden" name='_csrf' value=csrfToken)
+            br
         a(href="/") #{'Wróć'}
         
