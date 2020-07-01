@@ -11,7 +11,7 @@ var csrfProtection = csurf({ cookie: true });
 router.get('/', csrfProtection, (req, res, next) => {
   getTop(3)
   .then(memeList => {
-    res.render('index', { title: 'GIEŁDA MEMÓW', memes: memeList, message: "TOP 3 MEMY"});
+    res.render('index', { title: 'GIEŁDA MEMÓW', memes: memeList, message: "TOP 3 MEMY", logged: (req.session.userID)});
   })
   .catch(err => {
     console.log(err)
@@ -22,7 +22,7 @@ router.get('/', csrfProtection, (req, res, next) => {
 router.get('/meme/all', csrfProtection, (req, res) => {
   getTop(-1)
   .then(memeList => {
-    res.render('index', { title: 'GIEŁDA MEMÓW', memes: memeList, message: "Wszystkie memy"});
+    res.render('index', { title: 'GIEŁDA MEMÓW', memes: memeList, message: "Wszystkie memy", logged: (req.session.userID)});
   })
   .catch(err => {
 

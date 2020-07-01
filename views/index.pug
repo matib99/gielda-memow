@@ -9,3 +9,4 @@ block content
                    a(href="/meme/" + meme.id class='memeLink') #{meme.title}
                    img(src=meme.fileurl class='memeImg')
                    p(class='memePrice') #{'Cena: ' + meme.price}
+        button(onclick=`window.location.href='${logged ? '/logout' : '/login'}'`) #{logged ? 'Wyloguj' : 'Zaloguj'}

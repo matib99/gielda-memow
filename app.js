@@ -4,32 +4,20 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
-var MySQLStore = require('express-mysql-session')(session);
+const SQLiteStore = require('connect-sqlite3')(session)
 
 var indexRouter = require('./routes/index.js');
 
-var sessionStore = new MySQLStore(options);
-
-var options = {
-  host: 'localhost',
-  user: 'root',
-  password: '12345678',
-  database: 'sessions',
-};
-var sessionStore = new MySQLStore(options);
 
 
 var app = express();
 
-app.use(session({
-  secret: 'sup3rt4jnys3kr3t',
-  resave: false,
-  saveUninitialized: true,
-  store: sessionStore,
-  cookie: { 
-    
-    maxAge: 1000 * 60 * 15
-  }
+app.use(session( { 
+  store: new SQLiteStore,
+  secret: 'supertajnysekret',
+  resave: true,
+  cookie: { maxAge: 1000 * 60 * 60 },
+  saveUninitialized: false 
 }))
 
 // view engine setup

@@ -1,37 +1,39 @@
-var mysql = require('mysql')
-var connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '12345678',
-  database: 'mememarket'
-})
+var sqlite3 = require('sqlite3')
+const sqlite = sqlite3.verbose()
 
-connection.connect()
+const meme_DATABASE = 'database.db'
+let db = new sqlite.Database(meme_DATABASE)
+// sqlite3.Database.prototype.runBatchAsync = function (statements) {
+//     var results = [];
+//     var batch = ['BEGIN', ...statements, 'COMMIT'];
+//     return batch.reduce((chain, statement) => chain.then(result => {
+//         results.push(result);
+//         return db.run(...[].concat(statement));
+//     }), Promise.resolve())
+//     .catch(err => db.run('ROLLBACK').then(() => Promise.reject(err +
+//         ' in statement #' + results.length)))
+//     .then(() => results.slice(2));
+// };
 
 const getMeme = (id) => {
     return new Promise((resolve, reject) => {
-        connection.query(
+        db.get(
         `SELECT * FROM memes WHERE id = ${id}`,
-        (err, rows, fields) => {
+        (err, meme) => {
             if (err) {
-                // connection.end();
                 return reject(err);
             }
-            var meme = rows[0];
             if(meme === undefined) {
-                // connection.end();
                 resolve(undefined)
             }
             else {
-                connection.query(
+                db.all(
                 `SELECT price, changedate, username FROM prices LEFT JOIN users ON prices.userid = users.id WHERE memeid = ${id} ORDER BY changedate DESC`,
-                (err, rows, fields) => {
+                (err, rows) => {
                     if (err) {
-                        // connection.end();
                         return reject(err);
                     }
                     meme.priceHistory = rows;
-                    // connection.end();
                     resolve(meme);
                 })
             }
@@ -41,93 +43,59 @@ const getMeme = (id) => {
 
 const getTop = (n) =>  {
     return new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM memes ORDER BY price ${(n > 0) ? `LIMIT ${n} ` : ``} `,
-        (err, rows, fields) => {
+        db.all(`SELECT * FROM memes ORDER BY price DESC ${(n > 0) ? `LIMIT ${n} ` : ``} `,
+        (err, rows) => {
             if (err) {
-                // connection.end();
                 return reject(err);
             }
-            // connection.end();
             resolve(rows);
         });
     });
 }
 
+
+
 const newPrice = (id, price, userid=0) => {
-    connection.beginTransaction( (err) =>{
-        if(err) {
-            // connection.end();
-            throw err;
-        }
-        connection.query(
-        `UPDATE memes SET price=${price}
-        WHERE id=${id}`,
-        (err) => {
+    var statements = [
+        `UPDATE memes SET price=${price} WHERE id=${id};`,
+        `INSERT INTO prices (memeid, price, changedate, userid) VALUES (${id}, ${price}, "${getDate()}", ${userid});`
+    ];
+
+    return new Promise((resolve, reject) => {
+        db.run( statements[0], (err) => {
             if(err) {
-                connection.rollback();
-                // connection.end();
-                throw err;
-            } 
-            else {
-                connection.query(
-                `INSERT INTO prices (memeid, price, changedate, userid)
-                VALUES (${id}, ${price}, "${getDate()}", ${userid})`, 
-                (err) => {
-                    if(err) {
-                        connection.rollback();
-                        // connection.end();
-                        throw err;
-                    } 
-                    else {
-                        connection.commit((err)=>{
-                            if(err) connection.rollback();
-                            // connection.end();
-                        })
-                        
-                    }
+                reject(err)
+            } else {
+                db.run( statements[1], (err) => {
+                    if(err) reject(err)
+                    else resolve()
                 })
             }
         })
-    });
+    })
+    
 }
 
 
 const addMeme = (title, fileurl, price, userid) => {
-    connection.beginTransaction( (err) =>{
-        if(err) {
-            // connection.end();
-            throw err;
-        }
-        connection.query(
-        `INSERT INTO memes (title, price, fileurl)
-        VALUES (${title}, ${price}, ${fileurl})`,
-        (err, res) => {
+    var statements = [
+        `INSERT INTO memes (title, price, fileurl) VALUES (${title}, ${price}, ${fileurl});`,
+        `INSERT INTO prices (memeid, price, changedate, userid) VALUES (${res.insertId}, ${price}, "${getDate()}", ${userid});`
+    ];
+
+    return new Promise((resolve, reject) => {
+        db.run( statements[0], (err) => {
             if(err) {
-                connection.rollback();
-                // connection.end();
-                throw err;
-            } 
-            else {
-                connection.query(
-                `INSERT INTO prices (memeid, price, changedate, userid)
-                VALUES (${res.insertId}, ${price}, "${getDate()}", ${userid})`, 
-                (err) => {
-                    if(err) {
-                        connection.rollback();
-                        // connection.end();
-                        throw err;
-                    } 
-                    else {
-                        connection.commit((err)=>{
-                            if(err) connection.rollback();
-                            // connection.end();
-                        })
-                        
-                    }
+                reject(err)
+            } else {
+                db.run( statements[1], (err) => {
+                    if(err) reject(err)
+                    else resolve()
                 })
             }
         })
-    });
+    })
+
 }
 
 
@@ -145,4 +113,4 @@ const getDate = () => {
     return date;
 }
 
-module.exports = {getMeme, getTop, newPrice, addMeme};
+module.exports = {getMeme, getTop, newPrice, addMeme, getDate};
